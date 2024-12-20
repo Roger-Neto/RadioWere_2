@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lista de Musicas</title>
+  </head>
+  <body>
+      Lista de Musicas
+
+        {{song.id}} - {{song.song}} -{{song.link}}
+
+        <form action="{% url 'update' song.id %}" method="POST">
+            {% csrf_token %}
+            <input type="text" name="song" value="{{song.song}}">
+            <input type="text" name="link" value="{{song.link}}">
+            <button type="submit">Atualizar</button>
+          </form>
+  </body>
+</html>

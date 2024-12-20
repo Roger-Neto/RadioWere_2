@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lista de Musicas</title>
+  </head>
+  <body>
+      Lista de Musicas
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Song</th>
+            <th scope="col">Link</th>
+            <th scope="col">Modif.</th>
+            <th scope="col">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for song in songs %}
+          <tr>
+            <th scope="row">{{song.id}}</th>
+            <td>{{song.song}}</td>
+            <td>{{song.link}}</td>
+            <td><a href="{% url 'edit' song.id %}">Editar<a></td>
+            <td><a href="{% url 'delete' song.id %}">Excluir<a></td>
+          </tr>
+          {%endfor%}
+        </tbody>
+      </table>
+      <form action="{% url 'save'%}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="song">
+        <input type="text" name="link">
+        <button type="submit">Salvar</button>
+      </form>
+  </body>
+</html>
