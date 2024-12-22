@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RadioWare Playlist</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5" id="app">
+    <!-- Formulário de "login"-->
+    <div id="loginForm" class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+      <div class="card p-4" style="width: 300px;">
+        <h3 class="mb-4 text-center">RadioWare</h3>
+        <input type="text" id="playlistName" class="form-control mb-3" placeholder="O nome da sua playlist incrível">
+        <button class="btn btn-primary w-100" onclick="handleLoginSubmit()">Criar ou Entrar</button>
+      </div>
+    </div>
+
+    <!-- Conteudo da Playlist -->
+    <div id="playlistContent" style="display: none;">
+      <h1 class="mb-2">Playlist RadioWare</h1>
+      <p class="fst-italic" id="welcomeMessage"></p>
+
+      <div class="d-flex align-items-center mb-3">
+        <input type="text" id="songName" class="form-control me-2" placeholder="O nome da sua música">
+        <input type="text" id="songUrl" class="form-control me-2" placeholder="Seu link .mp3">
+        <button class="btn btn-primary" id="addButton" onclick="handleAdd()">Adicionar</button>
+      </div>
+
+      <hr>
+
+      <h3 id="playlistTitle"></h3>
+      <div class="table-responsive" style="max-height: 200px; overflow-y: scroll;">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th style="width: 5%;">Select</th>
+              <th style="width: 30%;">Nome</th>
+              <th style="width: 50%;">URL</th>
+              <th style="width: 15%;">Play</th>
+            </tr>
+          </thead>
+          <tbody id="playlistTableBody"></tbody>
+        </table>
+      </div>
+
+      <button class="btn btn-danger mt-3" id="deleteButton" onclick="handleDeleteSelected()" disabled>Delete Selected</button>
+
+      <audio id="audioPlayer" style="display: none;"></audio>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = '/api/playlists'; // Base URL para as requisições API
+    let playlistName = '';
+    let playlistData = [];
+    let selectedRows = [];
+
+    const loginForm = document.getElementById('loginForm');
+    const playlistContent = document.getElementById('playlistContent');
+    const playlistTitle = document.getElementById('playlistTitle');
+    const playlistTableBody = document.getElementById('playlistTableBody');
+    const deleteButton = document.getElementById('deleteButton');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    async function fetchApi(url, options = {}) {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function handleLoginSubmit() {
+      const input = document.getElementById('playlistName');
+      playlistName = input.value.trim();
+      if (!playlistName) {
+        alert('Por favor, insira um nome para a playlist.');
+        return;
+      }
+
+      try {
+        const existingPlaylist = await fetchApi(`${apiBase}/${playlistName}`);
+        playlistData = existingPlaylist.data || [];
+      } catch {
+        await fetchApi(apiBase, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: playlistName, data: [] })
+        });
+        playlistData = [];
+      }
+
+      document.getElementById('welcomeMessage').textContent = `Bem-vindo(a) a ${playlistName}! Adicione ou exclua músicas abaixo.`;
+      playlistTitle.textContent = playlistName;
+      loginForm.style.display = 'none';
+      playlistContent.style.display = 'block';
+      renderPlaylist();
+    }
+
+    function renderPlaylist() {
+      playlistTableBody.innerHTML = '';
+      playlistData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox" onchange="toggleRowSelection(${index})" ${selectedRows.includes(index) ? 'checked' : ''}></td>
+          <td>${item.row1}</td>
+          <td>${item.row2}</td>
+          <td><button class="btn btn-success btn-sm" onclick="handlePlayPause('${item.row2}')">
+            <i class="bi ${audioPlayer.src === item.row2 && !audioPlayer.paused ? 'bi-pause-fill' : 'bi-play-fill'}"></i>
+          </button></td>
+        `;
+        playlistTableBody.appendChild(row);
+      });
+      deleteButton.disabled = selectedRows.length === 0;
+    }
+
+    async function handleAdd() {
+      const songName = document.getElementById('songName').value.trim();
+      const songUrl = document.getElementById('songUrl').value.trim();
+      if (!songName || !songUrl) {
+        alert('Preencha todos os campos.');
+        return;
+      }
+
+      const newSong = { row1: songName, row2: songUrl };
+      playlistData.push(newSong);
+      await updatePlaylist();
+      renderPlaylist();
+      document.getElementById('songName').value = '';
+      document.getElementById('songUrl').value = '';
+    }
+
+    function toggleRowSelection(index) {
+      if (selectedRows.includes(index)) {
+        selectedRows = selectedRows.filter(i => i !== index);
+      } else {
+        selectedRows.push(index);
+      }
+      deleteButton.disabled = selectedRows.length === 0;
+    }
+
+    async function handleDeleteSelected() {
+      playlistData = playlistData.filter((_, index) => !selectedRows.includes(index));
+      selectedRows = [];
+      await updatePlaylist();
+      renderPlaylist();
+    }
+
+    async function updatePlaylist() {
+      await fetchApi(`${apiBase}/${playlistName}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: playlistData })
+      });
+    }
+
+    function handlePlayPause(url) {
+      if (audioPlayer.src === url && !audioPlayer.paused) {
+        audioPlayer.pause();
+      } else {
+        audioPlayer.src = url;
+        audioPlayer.play();
+      }
+      renderPlaylist();
+    }
+  </script>
+</body>
+</html>
