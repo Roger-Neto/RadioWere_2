@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-_c^xjd8sl7n^u8^2qs&o^_l+l*-i4e=pth3*4_pmo60yjw+cc%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'b147c08a90384067b51e065387efd07d.vfs.cloud9.us-east-1.amazonaws.com'
+]
 
 
 # Application definition
@@ -37,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core'
+    'core',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -80,8 +83,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -122,3 +123,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://b147c08a90384067b51e065387efd07d.vfs.cloud9.us-east-1.amazonaws.com'
+]
